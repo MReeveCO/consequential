@@ -5,15 +5,9 @@ from time import sleep
 import json
 import os
 
-years = [2024, 2023]
-max_number_of_legislation = 57
+years = range(2024, 1800, -1)
+max_number_of_legislation = 70
 
-
-# url = f'https://www.legislation.gov.uk/ukpga/2023/55/data.xml'
-# response = requests.get(url)
-# # soup = BeautifulSoup(response.text, 'xml')
-# with open('2023-55.xml', 'w') as f:
-#     f.write(response.text)
 
 for year in years:
     for leg in range(max_number_of_legislation):
@@ -24,9 +18,11 @@ for year in years:
             document = []
             soup = BeautifulSoup(response.text, 'xml')
             act = soup.title.string
+            unrepealed_act = soup.title.string.replace(' (repealed)', '')
+            act_year = int(unrepealed_act[-4:])
 
-            if not (os.path.isfile(f'../legislation/{act}.json') and os.path.exists(f'../legislation/{act}.json')):
-                year = int(soup.title.string[-4:])
+            if not ((os.path.isfile(f'../legislation/{act_year}/{act}.json') and os.path.exists(f'../legislation/{act_year}/{act}.json')) or (os.path.isfile(f'../repealed/{act_year}/{act}.json') and os.path.exists(f'../repealed/{act_year}/{act}.json'))):
+                print(f'* Examining {act}')
 
                 section_ids = []
                 for section in soup.find_all("P1group"):
@@ -46,15 +42,23 @@ for year in years:
                             soup.find(id=section).parent.find('Title').get_text(" "))
                         sect = {
                             'act': act,
-                            'year': year,
+                            'year': act_year,
                             'section': section_number,
                             'section_title': section_title,
                             'section_text': section_text
                         }
                         document.append(sect)
                 print(f'* Writing legislation for {act}')
-                with open(f'../legislation/{act}.json', 'w') as f:
-                    json.dump(document, f)
+                if '(repealed)' in act:
+                    if not os.path.exists(f'../repealed/{act_year}'):
+                        os.mkdir(f'../repealed/{act_year}')
+                    with open(f'../repealed/{act_year}/{act}.json', 'w') as f:
+                        json.dump(document, f)
+                else:
+                    if not os.path.exists(f'../legislation/{act_year}'):
+                        os.mkdir(f'../legislation/{act_year}')
+                    with open(f'../legislation/{act_year}/{act}.json', 'w') as f:
+                        json.dump(document, f)
             else:
                 print(f'== Already outputted {act}')
 
