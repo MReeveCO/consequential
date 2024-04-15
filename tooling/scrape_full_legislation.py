@@ -28,8 +28,10 @@ for year in years:
             if not (os.path.isfile(f'../legislation/{act}.json') and os.path.exists(f'../legislation/{act}.json')):
                 year = int(soup.title.string[-4:])
 
-                section_ids = [section.P1.get("id")
-                               for section in soup.find_all("P1group")]
+                section_ids = []
+                for section in soup.find_all("P1group"):
+                    if section.P1:
+                        section_ids.append(section.P1.get("id"))
                 section_ids = [
                     section for section in section_ids if section is not None]
 
