@@ -5,7 +5,7 @@ from time import sleep
 import json
 import os
 
-years = range(2024, 1800, -1)
+years = range(2001, 1800, -1)
 max_number_of_legislation = 70
 
 
@@ -18,7 +18,9 @@ for year in years:
             document = []
             soup = BeautifulSoup(response.text, 'xml')
             act = soup.title.string
-            unrepealed_act = soup.title.string.replace(' (repealed)', '')
+            print(act)
+            unrepealed_act = soup.title.string.replace(
+                ' (repealed)', '').replace('.', '').replace('(repealed)', '')
             act_year = int(unrepealed_act[-4:])
 
             if not ((os.path.isfile(f'../legislation/{act_year}/{act}.json') and os.path.exists(f'../legislation/{act_year}/{act}.json')) or (os.path.isfile(f'../repealed/{act_year}/{act}.json') and os.path.exists(f'../repealed/{act_year}/{act}.json'))):
