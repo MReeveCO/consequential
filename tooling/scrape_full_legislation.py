@@ -5,19 +5,23 @@ from time import sleep
 import json
 import os
 
-years = range(2000, 1800, -1)
+years = range(1992, 1800, -1)
 max_number_of_legislation = 70
 
 
-def act_splitter(act):
+def act_splitter(act, year):
     repealed = False
-    if 'repealed' in act or 'REPEALED' in act:
+    if 'repealed' in act.lower():
         repealed = True
         brack_start = act.rfind('(')
         unrepealed_act = act[:brack_start].strip()
     else:
         unrepealed_act = act
-    act_year = int(unrepealed_act[-4:])
+    try:
+        act_year = int(unrepealed_act[-4:])
+    except:
+        act_year = year
+
     return (act, act_year, repealed)
 
 
@@ -30,7 +34,7 @@ for year in years:
             document = []
             soup = BeautifulSoup(response.text, 'xml')
             act = soup.title.string
-            (act, act_year, repealed) = act_splitter(act)
+            (act, act_year, repealed) = act_splitter(act, year)
 
             if not ((os.path.isfile(f'../legislation/{act_year}/{act}.json') and os.path.exists(f'../legislation/{act_year}/{act}.json')) or (os.path.isfile(f'../repealed/{act_year}/{act}.json') and os.path.exists(f'../repealed/{act_year}/{act}.json'))):
                 print(f'* Examining {act}')
