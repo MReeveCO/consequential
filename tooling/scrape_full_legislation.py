@@ -5,8 +5,20 @@ from time import sleep
 import json
 import os
 
-years = range(2001, 1800, -1)
+years = range(2000, 1800, -1)
 max_number_of_legislation = 70
+
+
+def act_splitter(act):
+    repealed = False
+    if 'repealed' in act or 'REPEALED' in act:
+        repealed = True
+        brack_start = act.rfind('(')
+        unrepealed_act = act[:brack_start].strip()
+    else:
+        unrepealed_act = act
+    act_year = int(unrepealed_act[-4:])
+    return (act, act_year, repealed)
 
 
 for year in years:
@@ -18,10 +30,7 @@ for year in years:
             document = []
             soup = BeautifulSoup(response.text, 'xml')
             act = soup.title.string
-            print(act)
-            unrepealed_act = soup.title.string.replace(
-                ' (repealed)', '').replace('.', '').replace('(repealed)', '')
-            act_year = int(unrepealed_act[-4:])
+            (act, act_year, repealed) = act_splitter(act)
 
             if not ((os.path.isfile(f'../legislation/{act_year}/{act}.json') and os.path.exists(f'../legislation/{act_year}/{act}.json')) or (os.path.isfile(f'../repealed/{act_year}/{act}.json') and os.path.exists(f'../repealed/{act_year}/{act}.json'))):
                 print(f'* Examining {act}')
@@ -51,7 +60,7 @@ for year in years:
                         }
                         document.append(sect)
                 print(f'* Writing legislation for {act}')
-                if '(repealed)' in act:
+                if repealed:
                     if not os.path.exists(f'../repealed/{act_year}'):
                         os.mkdir(f'../repealed/{act_year}')
                     with open(f'../repealed/{act_year}/{act}.json', 'w') as f:
